@@ -34,6 +34,18 @@ const MONO = `'IBM Plex Mono', 'Roboto Mono', monospace`;
 const tintShadow = (color = C.primary, opacity = 0.08) => `0 4px 12px rgba(${hexToRgb(color)},${opacity})`;
 const hexToRgb = (hex) => { const r = parseInt(hex.slice(1,3),16); const g = parseInt(hex.slice(3,5),16); const b = parseInt(hex.slice(5,7),16); return `${r},${g},${b}`; };
 
+// Ubnic Favicon (injected into <head>)
+const FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%233b877b"/><path d="M28 30V50C28 75 40 82 50 82 60 82 72 75 72 50V30" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/><circle cx="28" cy="30" r="8" fill="white"/><circle cx="50" cy="82" r="8" fill="white"/><circle cx="72" cy="30" r="8" fill="white"/></svg>`;
+const Favicon = () => {
+  useEffect(() => {
+    let link = document.querySelector("link[rel~='icon']");
+    if (!link) { link = document.createElement("link"); link.rel = "icon"; document.head.appendChild(link); }
+    link.type = "image/svg+xml";
+    link.href = `data:image/svg+xml,${FAVICON_SVG}`;
+  }, []);
+  return null;
+};
+
 // Ubnic Logo SVG inline component
 const UbnicLogo = ({ height = 32 }) => (
   <svg viewBox="0 0 320 100" fill="none" style={{ height, width: "auto" }}>
@@ -879,13 +891,14 @@ export default function App() {
     <div style={{ textAlign: isNarrow ? "center" : "right" }}>
       <div style={{ fontSize: 10, color: C.textLight, fontWeight: 500, letterSpacing: 0.5, textTransform: "uppercase" }}>Organizado e revisto por</div>
       <div style={{ fontSize: 12, color: C.primaryDark, fontWeight: 600 }}>Dra. Mariana Dória</div>
-      <div style={{ fontSize: 10, color: C.textMuted }}>Especialista em Medicina Materno-Fetal</div>
+      <div style={{ fontSize: 10, color: C.textMuted }}>Especialista em Obstetrícia</div>
     </div>
   );
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: C.bg, fontFamily: FONT, color: C.text, WebkitFontSmoothing: "antialiased" }}>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+      <Favicon />
 
       {/* Header — scrolls with page (NOT sticky) */}
       <header style={{
