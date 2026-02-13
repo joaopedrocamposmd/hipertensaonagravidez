@@ -866,17 +866,34 @@ export default function App() {
     return true;
   };
 
+  // Detect narrow viewport for responsive author credit placement
+  const [isNarrow, setIsNarrow] = useState(false);
+  useEffect(() => {
+    const check = () => setIsNarrow(window.innerWidth < 600);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  const AuthorCredit = () => (
+    <div style={{ textAlign: isNarrow ? "center" : "right" }}>
+      <div style={{ fontSize: 10, color: C.textLight, fontWeight: 500, letterSpacing: 0.5, textTransform: "uppercase" }}>Organizado e revisto por</div>
+      <div style={{ fontSize: 12, color: C.primaryDark, fontWeight: 600 }}>Dra. Mariana Dória</div>
+      <div style={{ fontSize: 10, color: C.textMuted }}>Especialista em Medicina Materno-Fetal</div>
+    </div>
+  );
+
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: FONT, color: C.text, WebkitFontSmoothing: "antialiased" }}>
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: C.bg, fontFamily: FONT, color: C.text, WebkitFontSmoothing: "antialiased" }}>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 
-      {/* Header — Glassmorphism */}
+      {/* Header — scrolls with page (NOT sticky) */}
       <header style={{
         background: C.surface, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
         borderBottom: `1px solid ${C.surfaceBorder}`,
-        padding: "12px 20px", position: "sticky", top: 0, zIndex: 100,
+        padding: "12px 20px", flexShrink: 0,
       }}>
-        <div style={{ maxWidth: 820, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+        <div style={{ maxWidth: 820, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <UbnicLogo height={28} />
             <div style={{ width: 1, height: 28, background: C.borderLight }} />
@@ -885,17 +902,18 @@ export default function App() {
               <div style={{ fontSize: 10, color: C.textMuted, letterSpacing: 0.3 }}>Algoritmo de decisão clínica</div>
             </div>
           </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 10, color: C.textLight, fontWeight: 500, letterSpacing: 0.5, textTransform: "uppercase" }}>Organizado e revisto por</div>
-            <div style={{ fontSize: 12, color: C.primaryDark, fontWeight: 600 }}>Dra. Mariana Dória</div>
-            <div style={{ fontSize: 10, color: C.textMuted }}>Especialista em Medicina Materno-Fetal</div>
-          </div>
+          {!isNarrow && <AuthorCredit />}
         </div>
       </header>
 
-      <main style={{ maxWidth: 820, margin: "0 auto", padding: "20px 16px 100px" }}>
-        {/* Step Progress — Ubnic teal tones */}
-        <div style={{ display: "flex", gap: 4, marginBottom: 24, overflowX: "auto", paddingBottom: 4 }}>
+      {/* Sticky Tab Bar */}
+      <div style={{
+        position: "sticky", top: 0, zIndex: 100,
+        background: C.surface, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+        borderBottom: `1px solid ${C.surfaceBorder}`,
+        padding: "10px 16px 10px",
+      }}>
+        <div style={{ maxWidth: 820, margin: "0 auto", display: "flex", gap: 4, overflowX: "auto" }}>
           {STEPS.map((s, i) => {
             const isActive = i === step;
             const isVisited = i <= maxVisited;
@@ -917,6 +935,10 @@ export default function App() {
             );
           })}
         </div>
+      </div>
+
+      {/* Main Content — flex-grow to push footer down */}
+      <main style={{ maxWidth: 820, margin: "0 auto", padding: "20px 16px 24px", width: "100%", boxSizing: "border-box", flex: 1 }}>
 
         {/* Step Content — Glass Card */}
         <Card glass style={{ padding: "28px 26px" }}>
@@ -963,15 +985,21 @@ export default function App() {
         </div>
       </main>
 
-      {/* Footer — Glassmorphism */}
+      {/* Footer — static, at bottom (flex pushes it down), not overlapping */}
       <footer style={{
-        position: "fixed", bottom: 0, left: 0, right: 0,
-        background: C.surface, borderTop: `1px solid ${C.surfaceBorder}`,
-        padding: "8px 16px", textAlign: "center",
-        backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+        flexShrink: 0,
+        background: C.surfaceSolid, borderTop: `1px solid ${C.borderLight}`,
+        padding: "12px 16px", textAlign: "center",
       }}>
-        <div style={{ fontSize: 10, color: C.textLight, fontFamily: FONT, maxWidth: 820, margin: "0 auto" }}>
-          Ferramenta de apoio à decisão clínica — Não substitui o julgamento clínico · ISSHP 2021 · ACOG 2020/2024 · NICE 2023 · Protocolo HPH/ULS Matosinhos 2022
+        <div style={{ maxWidth: 820, margin: "0 auto" }}>
+          {isNarrow && (
+            <div style={{ marginBottom: 8 }}>
+              <AuthorCredit />
+            </div>
+          )}
+          <div style={{ fontSize: 10, color: C.textLight, fontFamily: FONT }}>
+            Ferramenta de apoio à decisão clínica — Não substitui o julgamento clínico · ISSHP 2021 · ACOG 2020/2024 · NICE 2023 · Protocolo HPH/ULS Matosinhos 2022
+          </div>
         </div>
       </footer>
     </div>
