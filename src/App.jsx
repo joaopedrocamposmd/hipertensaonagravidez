@@ -1,72 +1,90 @@
 import { useState, useEffect, useCallback } from "react";
 
-// ─── Color & Style Constants ───
-const COLORS = {
-  bg: "#faf7f5",
-  card: "#ffffff",
-  border: "#e8ddd6",
-  borderLight: "#f0e9e3",
-  accent: "#c4727f",
-  accentLight: "#f2dce0",
-  accentDark: "#a35566",
-  text: "#3d3235",
-  textMuted: "#8a7680",
-  textLight: "#b09da6",
-  green: "#5a9e7c",
-  greenBg: "#e8f5ee",
-  yellow: "#c4a24e",
-  yellowBg: "#fdf6e3",
-  orange: "#d07c4a",
-  orangeBg: "#fdf0e6",
-  red: "#c4505a",
-  redBg: "#fde8ea",
-  purple: "#8a6aad",
-  purpleBg: "#f0e8f7",
+// ─── UBNIC Design System ───
+const C = {
+  primary: "#3b877b",
+  primaryDark: "#2a6058",
+  primaryLight: "#e0f0ed",
+  primaryGhost: "rgba(59,135,123,0.08)",
+  bg: "#f4f7f6",
+  surface: "rgba(255,255,255,0.70)",
+  surfaceSolid: "#ffffff",
+  surfaceBorder: "rgba(255,255,255,0.50)",
+  border: "#d4ddd9",
+  borderLight: "#e4ece8",
+  text: "#2c3e50",
+  textMuted: "#6b8076",
+  textLight: "#93a8a0",
+  alert: "#e67e22",
+  alertBg: "#fdf0e3",
+  success: "#2ecc71",
+  successBg: "#e8f8ef",
+  yellow: "#d4a843",
+  yellowBg: "#fdf8ec",
+  red: "#c0392b",
+  redBg: "#fce8e6",
+  purple: "#7b68ad",
+  purpleBg: "#f0ecf7",
 };
 
-const fontStack = `'Instrument Serif', 'Georgia', serif`;
-const fontBody = `'DM Sans', 'Helvetica Neue', sans-serif`;
+const FONT = `'Inter', system-ui, -apple-system, sans-serif`;
+const MONO = `'IBM Plex Mono', 'Roboto Mono', monospace`;
 
-// ─── Utility Components ───
+// Tinted shadow utility
+const tintShadow = (color = C.primary, opacity = 0.08) => `0 4px 12px rgba(${hexToRgb(color)},${opacity})`;
+const hexToRgb = (hex) => { const r = parseInt(hex.slice(1,3),16); const g = parseInt(hex.slice(3,5),16); const b = parseInt(hex.slice(5,7),16); return `${r},${g},${b}`; };
+
+// Ubnic Logo SVG inline component
+const UbnicLogo = ({ height = 32 }) => (
+  <svg viewBox="0 0 320 100" fill="none" style={{ height, width: "auto" }}>
+    <path d="M28 30 V50 C28 75 40 82 50 82 C60 82 72 75 72 50 V30" stroke={C.primary} strokeWidth="9" strokeLinecap="round" strokeLinejoin="round"/>
+    <circle cx="28" cy="30" r="7" fill={C.primary} stroke="white" strokeWidth="2.5"/>
+    <circle cx="50" cy="82" r="7" fill={C.primary} stroke="white" strokeWidth="2.5"/>
+    <circle cx="72" cy="30" r="7" fill={C.primary} stroke="white" strokeWidth="2.5"/>
+    <text x="95" y="68" fontFamily="Inter, system-ui, sans-serif" fontWeight="bold" fontSize="42" letterSpacing="-1" fill={C.text}>UBNIC</text>
+  </svg>
+);
+
+// ─── Utility Components (Ubnic Design) ───
 const Badge = ({ color, children }) => {
   const colorMap = {
-    green: { bg: COLORS.greenBg, text: COLORS.green, border: "#c8e6d5" },
-    yellow: { bg: COLORS.yellowBg, text: COLORS.yellow, border: "#f0e0b0" },
-    orange: { bg: COLORS.orangeBg, text: COLORS.orange, border: "#f0d4bc" },
-    red: { bg: COLORS.redBg, text: COLORS.red, border: "#f0c4c8" },
-    purple: { bg: COLORS.purpleBg, text: COLORS.purple, border: "#d8c8e8" },
-    muted: { bg: "#f5f0ed", text: COLORS.textMuted, border: COLORS.border },
+    green: { bg: C.successBg, text: "#1a8a4a", border: "#b8e6cc" },
+    yellow: { bg: C.yellowBg, text: "#9a7a20", border: "#e8d8a0" },
+    orange: { bg: C.alertBg, text: C.alert, border: "#f0d4b0" },
+    red: { bg: C.redBg, text: C.red, border: "#f0b8b4" },
+    purple: { bg: C.purpleBg, text: C.purple, border: "#d0c4e4" },
+    muted: { bg: C.primaryGhost, text: C.textMuted, border: C.border },
   };
-  const c = colorMap[color] || colorMap.muted;
+  const cl = colorMap[color] || colorMap.muted;
   return (
     <span style={{
       display: "inline-flex", alignItems: "center", gap: 4,
       padding: "3px 10px", borderRadius: 20, fontSize: 12, fontWeight: 600,
-      fontFamily: fontBody, background: c.bg, color: c.text, border: `1px solid ${c.border}`,
+      fontFamily: FONT, background: cl.bg, color: cl.text, border: `1px solid ${cl.border}`,
       letterSpacing: 0.2, whiteSpace: "nowrap",
     }}>{children}</span>
   );
 };
 
 const SeverityDot = ({ level }) => {
-  const colors = { normal: COLORS.green, alert: COLORS.yellow, warning: COLORS.orange, critical: COLORS.red };
-  return <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: colors[level] || COLORS.textLight, marginRight: 6 }} />;
+  const colors = { normal: C.success, alert: C.yellow, warning: C.alert, critical: C.red };
+  return <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: colors[level] || C.textLight, marginRight: 6 }} />;
 };
 
 const Field = ({ label, children, hint, required, style: extraStyle }) => (
   <div style={{ marginBottom: 16, ...extraStyle }}>
-    <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: COLORS.text, fontFamily: fontBody, marginBottom: 5 }}>
-      {label}{required && <span style={{ color: COLORS.accent, marginLeft: 2 }}>*</span>}
+    <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: C.text, fontFamily: FONT, marginBottom: 5 }}>
+      {label}{required && <span style={{ color: C.primary, marginLeft: 2 }}>*</span>}
     </label>
     {children}
-    {hint && <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 3, fontFamily: fontBody }}>{hint}</div>}
+    {hint && <div style={{ fontSize: 11, color: C.textMuted, marginTop: 3, fontFamily: FONT }}>{hint}</div>}
   </div>
 );
 
 const inputStyle = {
-  width: "100%", padding: "9px 12px", borderRadius: 8, border: `1px solid ${COLORS.border}`,
-  fontSize: 14, fontFamily: fontBody, color: COLORS.text, background: "#fff",
-  outline: "none", transition: "border-color 0.2s",
+  width: "100%", padding: "9px 12px", borderRadius: 8, border: `1px solid ${C.border}`,
+  fontSize: 14, fontFamily: FONT, color: C.text, background: "#fff",
+  outline: "none", transition: "border-color 0.2s, box-shadow 0.2s",
   boxSizing: "border-box",
 };
 
@@ -75,11 +93,11 @@ const NumInput = ({ value, onChange, min, max, unit, placeholder, style: extra }
     <input
       type="number" value={value ?? ""} min={min} max={max} placeholder={placeholder}
       onChange={e => onChange(e.target.value === "" ? null : Number(e.target.value))}
-      style={{ ...inputStyle, width: unit ? "calc(100% - 44px)" : "100%", ...extra }}
-      onFocus={e => e.target.style.borderColor = COLORS.accent}
-      onBlur={e => e.target.style.borderColor = COLORS.border}
+      style={{ ...inputStyle, width: unit ? "calc(100% - 44px)" : "100%", fontFamily: unit ? MONO : FONT, ...extra }}
+      onFocus={e => { e.target.style.borderColor = C.primary; e.target.style.boxShadow = `0 0 0 3px ${C.primaryGhost}`; }}
+      onBlur={e => { e.target.style.borderColor = C.border; e.target.style.boxShadow = "none"; }}
     />
-    {unit && <span style={{ fontSize: 12, color: COLORS.textMuted, fontFamily: fontBody, minWidth: 38 }}>{unit}</span>}
+    {unit && <span style={{ fontSize: 12, color: C.textMuted, fontFamily: MONO, minWidth: 38 }}>{unit}</span>}
   </div>
 );
 
@@ -88,13 +106,14 @@ const Toggle = ({ value, onChange, label }) => (
     onClick={() => onChange(!value)}
     style={{
       display: "inline-flex", alignItems: "center", gap: 8, padding: "7px 14px",
-      borderRadius: 20, border: `1.5px solid ${value ? COLORS.accent : COLORS.border}`,
-      background: value ? COLORS.accentLight : "#fff", cursor: "pointer",
-      fontSize: 13, fontFamily: fontBody, color: value ? COLORS.accentDark : COLORS.textMuted,
+      borderRadius: 8, border: `1.5px solid ${value ? C.primary : C.border}`,
+      background: value ? C.primaryLight : "#fff", cursor: "pointer",
+      fontSize: 13, fontFamily: FONT, color: value ? C.primaryDark : C.textMuted,
       fontWeight: value ? 600 : 400, transition: "all 0.2s",
+      boxShadow: value ? tintShadow(C.primary, 0.1) : "none",
     }}
   >
-    <span style={{ width: 16, height: 16, borderRadius: "50%", border: `2px solid ${value ? COLORS.accent : COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "center", background: value ? COLORS.accent : "#fff", transition: "all 0.2s" }}>
+    <span style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${value ? C.primary : C.border}`, display: "flex", alignItems: "center", justifyContent: "center", background: value ? C.primary : "#fff", transition: "all 0.2s" }}>
       {value && <span style={{ color: "#fff", fontSize: 10, lineHeight: 1 }}>✓</span>}
     </span>
     {label}
@@ -105,27 +124,30 @@ const Select = ({ value, onChange, options, placeholder }) => (
   <select
     value={value ?? ""} onChange={e => onChange(e.target.value || null)}
     style={{ ...inputStyle, cursor: "pointer", appearance: "auto" }}
-    onFocus={e => e.target.style.borderColor = COLORS.accent}
-    onBlur={e => e.target.style.borderColor = COLORS.border}
+    onFocus={e => { e.target.style.borderColor = C.primary; e.target.style.boxShadow = `0 0 0 3px ${C.primaryGhost}`; }}
+    onBlur={e => { e.target.style.borderColor = C.border; e.target.style.boxShadow = "none"; }}
   >
     <option value="">{placeholder || "Selecionar..."}</option>
     {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
   </select>
 );
 
-const Card = ({ children, style: extra, accent }) => (
+const Card = ({ children, style: extra, accent, glass }) => (
   <div style={{
-    background: COLORS.card, borderRadius: 14, border: `1px solid ${COLORS.borderLight}`,
+    background: glass ? C.surface : C.surfaceSolid,
+    backdropFilter: glass ? "blur(12px)" : undefined,
+    WebkitBackdropFilter: glass ? "blur(12px)" : undefined,
+    borderRadius: 12, border: `1px solid ${glass ? C.surfaceBorder : C.borderLight}`,
     padding: "20px 22px", marginBottom: 16,
     borderLeft: accent ? `3px solid ${accent}` : undefined,
-    boxShadow: "0 1px 4px rgba(61,50,53,0.04)",
+    boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
     ...extra,
   }}>{children}</div>
 );
 
 const SectionTitle = ({ icon, children }) => (
-  <h3 style={{ fontSize: 15, fontWeight: 600, fontFamily: fontBody, color: COLORS.text, margin: "0 0 14px", display: "flex", alignItems: "center", gap: 8 }}>
-    {icon && <span style={{ fontSize: 17 }}>{icon}</span>}
+  <h3 style={{ fontSize: 14, fontWeight: 600, fontFamily: FONT, color: C.text, margin: "0 0 14px", display: "flex", alignItems: "center", gap: 8, letterSpacing: -0.2 }}>
+    {icon && <span style={{ fontSize: 16 }}>{icon}</span>}
     {children}
   </h3>
 );
@@ -142,7 +164,7 @@ function Step1_DadosGravida({ data, setData }) {
           <Field label="Idade gestacional" required style={{ flex: "1 1 200px", minWidth: 0 }}>
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <NumInput value={data.igSemanas} onChange={v => setData({ ...data, igSemanas: v })} min={0} max={42} unit="sem" placeholder="Sem" style={{ width: 70 }} />
-              <span style={{ color: COLORS.textLight, fontSize: 13 }}>+</span>
+              <span style={{ color: C.textLight, fontSize: 13 }}>+</span>
               <NumInput value={data.igDias} onChange={v => setData({ ...data, igDias: v })} min={0} max={6} unit="dias" placeholder="Dias" style={{ width: 70 }} />
             </div>
           </Field>
@@ -166,7 +188,7 @@ function Step1_DadosGravida({ data, setData }) {
         <Field label="Peso" hint="Opcional" style={{ flex: "1 1 120px", minWidth: 0 }}><NumInput value={data.peso} onChange={v => setData({ ...data, peso: v })} min={30} max={250} unit="kg" /></Field>
         <Field label="Altura" hint="Opcional" style={{ flex: "1 1 120px", minWidth: 0 }}><NumInput value={data.altura} onChange={v => setData({ ...data, altura: v })} min={120} max={200} unit="cm" /></Field>
         <Field label="IMC" hint="Calculado" style={{ flex: "1 1 120px", minWidth: 0 }}>
-          <div style={{ ...inputStyle, background: "#f9f6f4", color: imc ? COLORS.text : COLORS.textLight }}>
+          <div style={{ ...inputStyle, background: C.bg, color: imc ? C.text : C.textLight, fontFamily: MONO }}>
             {imc ? `${imc} kg/m²` : "—"}
           </div>
         </Field>
@@ -248,8 +270,8 @@ function Step3_TA({ data, setData }) {
 
   return (
     <div>
-      <p style={{ fontSize: 13, color: COLORS.textMuted, fontFamily: fontBody, marginBottom: 18, lineHeight: 1.5 }}>
-        Introduza até 3 medições. O algoritmo utilizará a <strong style={{ color: COLORS.text }}>média das medições preenchidas</strong> para os cálculos.
+      <p style={{ fontSize: 13, color: C.textMuted, fontFamily: FONT, marginBottom: 18, lineHeight: 1.5 }}>
+        Introduza até 3 medições. O algoritmo utilizará a <strong style={{ color: C.text }}>média das medições preenchidas</strong> para os cálculos.
       </p>
 
       {labels.map((l, i) => (
@@ -258,16 +280,15 @@ function Step3_TA({ data, setData }) {
             <span style={{
               display: "inline-flex", alignItems: "center", justifyContent: "center",
               width: 22, height: 22, borderRadius: "50%", fontSize: 11, fontWeight: 600,
-              fontFamily: fontBody,
-              background: l.required ? COLORS.accent : COLORS.borderLight,
-              color: l.required ? "#fff" : COLORS.textMuted,
-            }}>{i + 1}</span>
-            <span style={{ fontSize: 13, fontFamily: fontBody, color: COLORS.text, fontWeight: 500 }}>
+              fontFamily: FONT,
+              background: l.required ? C.primary : C.borderLight,
+              color: l.required ? "#fff" : C.textMuted,            }}>{i + 1}</span>
+            <span style={{ fontSize: 13, fontFamily: FONT, color: C.text, fontWeight: 500 }}>
               {l.num} Medição
             </span>
             {l.required
-              ? <span style={{ fontSize: 11, color: COLORS.accent, fontFamily: fontBody, fontWeight: 500 }}>obrigatória</span>
-              : <span style={{ fontSize: 11, color: COLORS.textLight, fontFamily: fontBody }}>opcional</span>
+              ? <span style={{ fontSize: 11, color: C.primary, fontFamily: FONT, fontWeight: 500 }}>obrigatória</span>
+              : <span style={{ fontSize: 11, color: C.textLight, fontFamily: FONT }}>opcional</span>
             }
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0 16px", paddingLeft: 30 }}>
@@ -278,7 +299,7 @@ function Step3_TA({ data, setData }) {
               <NumInput value={ta[i].dia} onChange={v => setTA(i, "dia", v)} min={30} max={160} unit="mmHg" placeholder={i === 0 ? "Ex: 95" : "—"} />
             </Field>
           </div>
-          {i < 2 && <div style={{ height: 1, background: COLORS.borderLight, marginTop: 4 }} />}
+          {i < 2 && <div style={{ height: 1, background: C.borderLight, marginTop: 4 }} />}
         </div>
       ))}
 
@@ -286,22 +307,22 @@ function Step3_TA({ data, setData }) {
       {avgSys && avgDia && (
         <div style={{
           marginTop: 20, padding: "14px 18px", borderRadius: 12,
-          background: isEmergency ? COLORS.redBg : isHTA ? COLORS.yellowBg : COLORS.greenBg,
-          border: `1.5px solid ${isEmergency ? COLORS.red : isHTA ? COLORS.yellow : COLORS.green}`,
+          background: isEmergency ? C.redBg : isHTA ? C.yellowBg : C.successBg,
+          border: `1.5px solid ${isEmergency ? C.red : isHTA ? C.yellow : C.success}`,
         }}>
-          <div style={{ fontSize: 11, fontFamily: fontBody, fontWeight: 600, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>
+          <div style={{ fontSize: 11, fontFamily: FONT, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>
             Valores utilizados no algoritmo {nMeasurements > 1 ? `(média de ${nMeasurements} medições)` : "(1 medição)"}
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 24px", alignItems: "center" }}>
             <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-              <span style={{ fontSize: 13, color: COLORS.textMuted, fontFamily: fontBody }}>TA:</span>
-              <span style={{ fontSize: 22, fontWeight: 700, fontFamily: fontStack, color: COLORS.text }}>{avgSys}/{avgDia}</span>
-              <span style={{ fontSize: 12, color: COLORS.textMuted, fontFamily: fontBody }}>mmHg</span>
+              <span style={{ fontSize: 13, color: C.textMuted, fontFamily: FONT }}>TA:</span>
+              <span style={{ fontSize: 22, fontWeight: 700, fontFamily: MONO, color: C.text }}>{avgSys}/{avgDia}</span>
+              <span style={{ fontSize: 12, color: C.textMuted, fontFamily: MONO }}>mmHg</span>
             </div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-              <span style={{ fontSize: 13, color: COLORS.textMuted, fontFamily: fontBody }}>TAM:</span>
-              <span style={{ fontSize: 17, fontWeight: 600, fontFamily: fontBody, color: COLORS.text }}>{map}</span>
-              <span style={{ fontSize: 12, color: COLORS.textMuted, fontFamily: fontBody }}>mmHg</span>
+              <span style={{ fontSize: 13, color: C.textMuted, fontFamily: FONT }}>TAM:</span>
+              <span style={{ fontSize: 17, fontWeight: 600, fontFamily: MONO, color: C.text }}>{map}</span>
+              <span style={{ fontSize: 12, color: C.textMuted, fontFamily: MONO }}>mmHg</span>
             </div>
           </div>
         </div>
@@ -309,12 +330,12 @@ function Step3_TA({ data, setData }) {
 
       {/* Alerts */}
       {isEmergency && (
-        <Card accent={COLORS.red} style={{ background: COLORS.redBg, marginTop: 14 }}>
+        <Card accent={C.red} style={{ background: C.redBg, marginTop: 14 }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
             <span style={{ fontSize: 20 }}>🚨</span>
             <div>
-              <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.red, fontFamily: fontBody, marginBottom: 4 }}>EMERGÊNCIA HIPERTENSIVA</div>
-              <div style={{ fontSize: 13, color: COLORS.text, fontFamily: fontBody, lineHeight: 1.5 }}>
+              <div style={{ fontWeight: 700, fontSize: 14, color: C.red, fontFamily: FONT, marginBottom: 4 }}>EMERGÊNCIA HIPERTENSIVA</div>
+              <div style={{ fontSize: 13, color: C.text, fontFamily: FONT, lineHeight: 1.5 }}>
                 TA ≥160/110 mmHg — Iniciar protocolo escalonado imediato.<br />
                 Confirmar em 2 medições espaçadas por minutos.
               </div>
@@ -324,12 +345,12 @@ function Step3_TA({ data, setData }) {
       )}
 
       {isHTA && !isEmergency && (
-        <Card accent={COLORS.yellow} style={{ background: COLORS.yellowBg, marginTop: 14 }}>
+        <Card accent={C.yellow} style={{ background: C.yellowBg, marginTop: 14 }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
             <span style={{ fontSize: 18 }}>⚠️</span>
             <div>
-              <div style={{ fontWeight: 600, fontSize: 13, color: COLORS.yellow, fontFamily: fontBody, marginBottom: 2 }}>HTA confirmada</div>
-              <div style={{ fontSize: 12, color: COLORS.text, fontFamily: fontBody }}>TA ≥140/90 mmHg — Prosseguir com avaliação laboratorial e clínica.</div>
+              <div style={{ fontWeight: 600, fontSize: 13, color: C.yellow, fontFamily: FONT, marginBottom: 2 }}>HTA confirmada</div>
+              <div style={{ fontSize: 12, color: C.text, fontFamily: FONT }}>TA ≥140/90 mmHg — Prosseguir com avaliação laboratorial e clínica.</div>
             </div>
           </div>
         </Card>
@@ -357,40 +378,41 @@ function Step4_Sintomas({ data, setData }) {
 
   return (
     <div>
-      <p style={{ fontSize: 13, color: COLORS.textMuted, fontFamily: fontBody, marginBottom: 16, lineHeight: 1.5 }}>
+      <p style={{ fontSize: 13, color: C.textMuted, fontFamily: FONT, marginBottom: 16, lineHeight: 1.5 }}>
         Assinale os sintomas presentes. Cada um constitui critério de gravidade independentemente dos valores tensionais.
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {symptoms.map(s => (
           <button key={s.key} onClick={() => toggleSymptom(s.key)} style={{
             display: "flex", alignItems: "center", gap: 12, padding: "12px 16px",
-            borderRadius: 10, border: `1.5px solid ${data.sintomas?.[s.key] ? COLORS.red : COLORS.border}`,
-            background: data.sintomas?.[s.key] ? COLORS.redBg : "#fff", cursor: "pointer",
+            borderRadius: 8, border: `1.5px solid ${data.sintomas?.[s.key] ? C.red : C.border}`,
+            background: data.sintomas?.[s.key] ? C.redBg : "#fff", cursor: "pointer",
             textAlign: "left", transition: "all 0.2s",
+            boxShadow: data.sintomas?.[s.key] ? tintShadow(C.red, 0.08) : "none",
           }}>
-            <span style={{ width: 20, height: 20, borderRadius: 6, border: `2px solid ${data.sintomas?.[s.key] ? COLORS.red : COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "center", background: data.sintomas?.[s.key] ? COLORS.red : "#fff", flexShrink: 0 }}>
+            <span style={{ width: 20, height: 20, borderRadius: 4, border: `2px solid ${data.sintomas?.[s.key] ? C.red : C.border}`, display: "flex", alignItems: "center", justifyContent: "center", background: data.sintomas?.[s.key] ? C.red : "#fff", flexShrink: 0 }}>
               {data.sintomas?.[s.key] && <span style={{ color: "#fff", fontSize: 12 }}>✓</span>}
             </span>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 500, color: COLORS.text, fontFamily: fontBody }}>{s.label}</div>
-              {s.detail && <div style={{ fontSize: 11, color: COLORS.textMuted, fontFamily: fontBody }}>{s.detail}</div>}
+              <div style={{ fontSize: 13, fontWeight: 500, color: C.text, fontFamily: FONT }}>{s.label}</div>
+              {s.detail && <div style={{ fontSize: 11, color: C.textMuted, fontFamily: FONT }}>{s.detail}</div>}
             </div>
           </button>
         ))}
       </div>
 
       {data.sintomas?.convulsoes && data.epilepsia && (
-        <Card accent={COLORS.orange} style={{ marginTop: 16, background: COLORS.orangeBg }}>
-          <div style={{ fontSize: 13, fontFamily: fontBody, color: COLORS.orange, fontWeight: 600, marginBottom: 4 }}>⚠ Epilepsia conhecida</div>
-          <div style={{ fontSize: 12, fontFamily: fontBody, color: COLORS.text }}>
+        <Card accent={C.alert} style={{ marginTop: 16, background: C.alertBg }}>
+          <div style={{ fontSize: 13, fontFamily: FONT, color: C.alert, fontWeight: 600, marginBottom: 4 }}>⚠ Epilepsia conhecida</div>
+          <div style={{ fontSize: 12, fontFamily: FONT, color: C.text }}>
             Grávida com epilepsia conhecida — excluir crise epiléptica antes de diagnosticar eclâmpsia. Avaliar contexto clínico, adesão à terapêutica e outras causas de convulsões.
           </div>
         </Card>
       )}
 
       {hasAny && !data.sintomas?.convulsoes && (
-        <Card accent={COLORS.red} style={{ marginTop: 16 }}>
-          <div style={{ fontSize: 13, fontFamily: fontBody, fontWeight: 600, color: COLORS.red }}>Critério(s) de gravidade presente(s)</div>
+        <Card accent={C.red} style={{ marginTop: 16 }}>
+          <div style={{ fontSize: 13, fontFamily: FONT, fontWeight: 600, color: C.red }}>Critério(s) de gravidade presente(s)</div>
         </Card>
       )}
     </div>
@@ -432,7 +454,7 @@ function Step5_Lab({ data, setData }) {
     }
   }
 
-  const levelColors = { critical: COLORS.red, alert: COLORS.yellow, normal: COLORS.green, none: COLORS.textLight };
+  const levelColors = { critical: C.red, alert: C.yellow, normal: C.success, none: C.textLight };
   const LabField = ({ label, unit, value, onChange, level, min, max, hint }) => (
     <Field label={label} hint={hint}>
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -463,7 +485,7 @@ function Step5_Lab({ data, setData }) {
         <div style={{ flex: "1 1 160px", minWidth: 0 }}><LabField label="Haptoglobina" unit="mg/dL" value={lab.haptoglobina} onChange={v => setLab("haptoglobina", v)} level={lab.haptoglobina != null && lab.haptoglobina < 30 ? "alert" : "none"} /></div>
       </div>
 
-      <div style={{ height: 1, background: COLORS.borderLight, margin: "20px 0" }} />
+      <div style={{ height: 1, background: C.borderLight, margin: "20px 0" }} />
       <SectionTitle icon="🧪">Proteinúria</SectionTitle>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "0 16px" }}>
         <div style={{ flex: "1 1 160px", minWidth: 0 }}>
@@ -491,12 +513,12 @@ function Step5_Lab({ data, setData }) {
       </div>
 
       {(lab.prot24 > 5000 || (lab.pc && lab.pc > 5)) && (
-        <Card accent={COLORS.purple} style={{ background: COLORS.purpleBg }}>
-          <div style={{ fontSize: 12, fontFamily: fontBody, color: COLORS.purple, fontWeight: 600 }}>Suspeita de síndrome nefrótico — Confirmar proteinúria 24h; implicações na tromboprofilaxia</div>
+        <Card accent={C.purple} style={{ background: C.purpleBg }}>
+          <div style={{ fontSize: 12, fontFamily: FONT, color: C.purple, fontWeight: 600 }}>Suspeita de síndrome nefrótico — Confirmar proteinúria 24h; implicações na tromboprofilaxia</div>
         </Card>
       )}
 
-      <div style={{ height: 1, background: COLORS.borderLight, margin: "20px 0" }} />
+      <div style={{ height: 1, background: C.borderLight, margin: "20px 0" }} />
       <SectionTitle icon="🔮">Rácio sFlt-1/PlGF</SectionTitle>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "0 16px" }}>
         <div style={{ flex: "1 1 160px", minWidth: 0 }}><Field label="sFlt-1" hint="pg/mL"><NumInput value={lab.sflt1} onChange={v => setLab("sflt1", v)} unit="pg/mL" /></Field></div>
@@ -507,20 +529,20 @@ function Step5_Lab({ data, setData }) {
       </div>
 
       {ratioInterpretation && (
-        <Card accent={levelColors[ratioInterpretation.level === "green" ? "normal" : ratioInterpretation.level === "yellow" ? "alert" : ratioInterpretation.level === "orange" ? "alert" : "critical"]} style={{ background: ratioInterpretation.level === "green" ? COLORS.greenBg : ratioInterpretation.level === "yellow" ? COLORS.yellowBg : ratioInterpretation.level === "orange" ? COLORS.orangeBg : COLORS.redBg }}>
+        <Card accent={levelColors[ratioInterpretation.level === "green" ? "normal" : ratioInterpretation.level === "yellow" ? "alert" : ratioInterpretation.level === "orange" ? "alert" : "critical"]} style={{ background: ratioInterpretation.level === "green" ? C.successBg : ratioInterpretation.level === "yellow" ? C.yellowBg : ratioInterpretation.level === "orange" ? C.alertBg : C.redBg }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
               <Badge color={ratioInterpretation.level === "green" ? "green" : ratioInterpretation.level === "yellow" ? "yellow" : ratioInterpretation.level === "orange" ? "orange" : "red"}>
                 {igWeeks < 34 ? "<34 semanas" : "≥34 semanas"}
               </Badge>
-              <div style={{ fontWeight: 700, fontSize: 14, fontFamily: fontBody, color: COLORS.text, marginTop: 8 }}>{ratioInterpretation.text}</div>
-              <div style={{ fontSize: 12, fontFamily: fontBody, color: COLORS.textMuted, marginTop: 2 }}>{ratioInterpretation.detail}</div>
+              <div style={{ fontWeight: 700, fontSize: 14, fontFamily: FONT, color: C.text, marginTop: 8 }}>{ratioInterpretation.text}</div>
+              <div style={{ fontSize: 12, fontFamily: FONT, color: C.textMuted, marginTop: 2 }}>{ratioInterpretation.detail}</div>
             </div>
             <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: 24, fontWeight: 700, fontFamily: fontStack, color: COLORS.text }}>{lab.sflt1plgf || (lab.sflt1 && lab.plgf ? Math.round(lab.sflt1 / lab.plgf) : "—")}</div>
+              <div style={{ fontSize: 24, fontWeight: 700, fontFamily: MONO, color: C.text }}>{lab.sflt1plgf || (lab.sflt1 && lab.plgf ? Math.round(lab.sflt1 / lab.plgf) : "—")}</div>
             </div>
           </div>
-          <div style={{ marginTop: 10, padding: "8px 12px", borderRadius: 8, background: "rgba(255,255,255,0.6)", fontSize: 12, fontFamily: fontBody, color: COLORS.text }}>
+          <div style={{ marginTop: 10, padding: "8px 12px", borderRadius: 8, background: "rgba(255,255,255,0.6)", fontSize: 12, fontFamily: FONT, color: C.text }}>
             <strong>Conduta:</strong> {ratioInterpretation.conduct}
           </div>
         </Card>
@@ -542,8 +564,8 @@ function Step6_Fetal({ data, setData }) {
       </div>
 
       {f.percentilPfe != null && f.percentilPfe < 10 && (
-        <Card accent={f.percentilPfe < 3 ? COLORS.red : COLORS.orange} style={{ background: f.percentilPfe < 3 ? COLORS.redBg : COLORS.orangeBg }}>
-          <div style={{ fontSize: 13, fontFamily: fontBody, fontWeight: 600, color: f.percentilPfe < 3 ? COLORS.red : COLORS.orange }}>
+        <Card accent={f.percentilPfe < 3 ? C.red : C.alert} style={{ background: f.percentilPfe < 3 ? C.redBg : C.alertBg }}>
+          <div style={{ fontSize: 13, fontFamily: FONT, fontWeight: 600, color: f.percentilPfe < 3 ? C.red : C.alert }}>
             {f.percentilPfe < 3 ? "PFE < p3 — RCF grave" : "PFE < p10 — Avaliar Doppler fetal"}
           </div>
         </Card>
@@ -577,13 +599,13 @@ function Step6_Fetal({ data, setData }) {
       </Field>
 
       {f.fluxoAU === "reverso" && (
-        <Card accent={COLORS.red} style={{ background: COLORS.redBg }}>
-          <div style={{ fontSize: 13, fontFamily: fontBody, fontWeight: 700, color: COLORS.red }}>🚨 Fluxo diastólico reverso na artéria umbilical — Considerar parto urgente</div>
+        <Card accent={C.red} style={{ background: C.redBg }}>
+          <div style={{ fontSize: 13, fontFamily: FONT, fontWeight: 700, color: C.red }}>🚨 Fluxo diastólico reverso na artéria umbilical — Considerar parto urgente</div>
         </Card>
       )}
       {f.dv === "reversa" && (
-        <Card accent={COLORS.red} style={{ background: COLORS.redBg }}>
-          <div style={{ fontSize: 13, fontFamily: fontBody, fontWeight: 700, color: COLORS.red }}>🚨 Onda a reversa no ductus venoso — Descompensação cardíaca fetal iminente</div>
+        <Card accent={C.red} style={{ background: C.redBg }}>
+          <div style={{ fontSize: 13, fontFamily: FONT, fontWeight: 700, color: C.red }}>🚨 Onda a reversa no ductus venoso — Descompensação cardíaca fetal iminente</div>
         </Card>
       )}
     </div>
@@ -712,18 +734,18 @@ function classifyCase(data) {
 function StepResults({ data }) {
   const result = classifyCase(data);
   const ig = result.ig;
-  const colorMap = { green: COLORS.green, yellow: COLORS.yellow, orange: COLORS.orange, red: COLORS.red, muted: COLORS.textMuted };
-  const bgMap = { green: COLORS.greenBg, yellow: COLORS.yellowBg, orange: COLORS.orangeBg, red: COLORS.redBg, muted: "#f5f0ed" };
+  const colorMap = { green: C.success, yellow: C.yellow, orange: C.alert, red: C.red, muted: C.textMuted };
+  const bgMap = { green: C.successBg, yellow: C.yellowBg, orange: C.alertBg, red: C.redBg, muted: C.primaryGhost };
 
   return (
     <div>
       {/* Main Diagnosis Card */}
       <div style={{
         background: bgMap[result.color], border: `2px solid ${colorMap[result.color]}`,
-        borderRadius: 16, padding: "24px 28px", marginBottom: 20, textAlign: "center",
+        borderRadius: 12, padding: "24px 28px", marginBottom: 20, textAlign: "center",
       }}>
-        <div style={{ fontSize: 11, fontFamily: fontBody, fontWeight: 600, color: colorMap[result.color], textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>Classificação</div>
-        <div style={{ fontSize: 22, fontFamily: fontStack, fontWeight: 700, color: COLORS.text, lineHeight: 1.3 }}>{result.diagnosis}</div>
+        <div style={{ fontSize: 11, fontFamily: FONT, fontWeight: 600, color: colorMap[result.color], textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>Classificação</div>
+        <div style={{ fontSize: 20, fontFamily: FONT, fontWeight: 700, color: C.text, lineHeight: 1.3 }}>{result.diagnosis}</div>
         <div style={{ marginTop: 10, display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap" }}>
           <Badge color={result.color}>{ig.toFixed(1)} semanas</Badge>
           {result.hasProteinuria && <Badge color="purple">Proteinúria +</Badge>}
@@ -734,11 +756,11 @@ function StepResults({ data }) {
 
       {/* Severity Criteria */}
       {result.severityCriteria.length > 0 && (
-        <Card accent={COLORS.red}>
+        <Card accent={C.red}>
           <SectionTitle icon="⚠️">Critérios de gravidade identificados</SectionTitle>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {result.severityCriteria.map((c, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontFamily: fontBody, color: COLORS.text }}>
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontFamily: FONT, color: C.text }}>
                 <SeverityDot level="critical" />{c}
               </div>
             ))}
@@ -747,21 +769,21 @@ function StepResults({ data }) {
       )}
 
       {/* Delivery Timing */}
-      <Card accent={result.deliveryUrgency === "immediate" ? COLORS.red : result.deliveryUrgency === "urgent" ? COLORS.orange : COLORS.green}>
+      <Card accent={result.deliveryUrgency === "immediate" ? C.red : result.deliveryUrgency === "urgent" ? C.alert : C.success}>
         <SectionTitle icon="🏥">Conduta — Timing do parto</SectionTitle>
-        <div style={{ fontSize: 14, fontFamily: fontBody, color: COLORS.text, lineHeight: 1.6, fontWeight: 500 }}>
+        <div style={{ fontSize: 14, fontFamily: FONT, color: C.text, lineHeight: 1.6, fontWeight: 500 }}>
           {result.deliveryTiming}
         </div>
       </Card>
 
       {/* Treatment suggestions */}
       {(result.level === "severe" || result.level === "critical") && (
-        <Card accent={COLORS.accent}>
+        <Card accent={C.primary}>
           <SectionTitle icon="💊">Terapêutica sugerida</SectionTitle>
-          <div style={{ fontSize: 13, fontFamily: fontBody, color: COLORS.text, lineHeight: 1.7 }}>
+          <div style={{ fontSize: 13, fontFamily: FONT, color: C.text, lineHeight: 1.7 }}>
             {(data.taSistolica >= 160 || data.taDiastolica >= 110) && (
               <div style={{ marginBottom: 8 }}>
-                <strong style={{ color: COLORS.red }}>Emergência hipertensiva:</strong> Nifedipina 10 mg PO (escalonar cada 20 min) ou Labetalol 20 mg IV (escalonar cada 10 min)
+                <strong style={{ color: C.red }}>Emergência hipertensiva:</strong> Nifedipina 10 mg PO (escalonar cada 20 min) ou Labetalol 20 mg IV (escalonar cada 10 min)
               </div>
             )}
             <div style={{ marginBottom: 8 }}>
@@ -782,7 +804,7 @@ function StepResults({ data }) {
       {/* Surveillance checklist */}
       <Card>
         <SectionTitle icon="📋">Vigilância recomendada</SectionTitle>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 20px", fontSize: 12, fontFamily: fontBody, color: COLORS.text }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 20px", fontSize: 12, fontFamily: FONT, color: C.text }}>
           {result.level === "severe" || result.level === "critical" ? (
             <>
               <div>◻ TA 6/6h (mín.)</div>
@@ -845,31 +867,34 @@ export default function App() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: COLORS.bg, fontFamily: fontBody, color: COLORS.text }}>
-      <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: FONT, color: C.text, WebkitFontSmoothing: "antialiased" }}>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 
-      {/* Header */}
+      {/* Header — Glassmorphism */}
       <header style={{
-        background: "#fff", borderBottom: `1px solid ${COLORS.borderLight}`,
-        padding: "16px 24px", position: "sticky", top: 0, zIndex: 100,
+        background: C.surface, backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+        borderBottom: `1px solid ${C.surfaceBorder}`,
+        padding: "12px 20px", position: "sticky", top: 0, zIndex: 100,
       }}>
-        <div style={{ maxWidth: 820, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div>
-            <h1 style={{ fontSize: 20, fontFamily: fontStack, fontWeight: 400, color: COLORS.text, margin: 0, letterSpacing: -0.3 }}>
-              Hipertensão <em>na</em> Gravidez
-            </h1>
-            <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>Algoritmo de decisão clínica</div>
+        <div style={{ maxWidth: 820, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <UbnicLogo height={28} />
+            <div style={{ width: 1, height: 28, background: C.borderLight }} />
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: C.text, letterSpacing: -0.3 }}>Hipertensão na Gravidez</div>
+              <div style={{ fontSize: 10, color: C.textMuted, letterSpacing: 0.3 }}>Algoritmo de decisão clínica</div>
+            </div>
           </div>
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 10, color: COLORS.textLight, fontWeight: 500, letterSpacing: 0.5, textTransform: "uppercase" }}>Organizado e revisto por</div>
-            <div style={{ fontSize: 12, color: COLORS.accent, fontWeight: 600 }}>Dra. Mariana Dória</div>
-            <div style={{ fontSize: 10, color: COLORS.textMuted }}>Especialista em Medicina Materno-Fetal</div>
+            <div style={{ fontSize: 10, color: C.textLight, fontWeight: 500, letterSpacing: 0.5, textTransform: "uppercase" }}>Organizado e revisto por</div>
+            <div style={{ fontSize: 12, color: C.primaryDark, fontWeight: 600 }}>Dra. Mariana Dória</div>
+            <div style={{ fontSize: 10, color: C.textMuted }}>Especialista em Medicina Materno-Fetal</div>
           </div>
         </div>
       </header>
 
       <main style={{ maxWidth: 820, margin: "0 auto", padding: "20px 16px 100px" }}>
-        {/* Step Progress */}
+        {/* Step Progress — Ubnic teal tones */}
         <div style={{ display: "flex", gap: 4, marginBottom: 24, overflowX: "auto", paddingBottom: 4 }}>
           {STEPS.map((s, i) => {
             const isActive = i === step;
@@ -877,25 +902,26 @@ export default function App() {
             const isFuture = i > maxVisited;
             return (
               <button key={s.key} onClick={() => goToStep(i)} style={{
-                flex: 1, minWidth: 80, padding: "10px 6px", borderRadius: 10, border: "none",
-                background: isActive ? COLORS.accent : isVisited ? COLORS.accentLight : "#f0ebe7",
-                color: isActive ? "#fff" : isVisited ? COLORS.accentDark : COLORS.textLight,
-                fontSize: 11, fontFamily: fontBody, fontWeight: isActive ? 600 : 400,
+                flex: 1, minWidth: 80, padding: "10px 6px", borderRadius: 8, border: "none",
+                background: isActive ? C.primary : isVisited ? C.primaryLight : "#e8eeec",
+                color: isActive ? "#fff" : isVisited ? C.primaryDark : C.textLight,
+                fontSize: 11, fontFamily: FONT, fontWeight: isActive ? 600 : 400,
                 cursor: isVisited ? "pointer" : "default", transition: "all 0.2s",
                 display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
-                opacity: isFuture ? 0.5 : 1,
+                opacity: isFuture ? 0.45 : 1,
+                boxShadow: isActive ? tintShadow(C.primary, 0.2) : "none",
               }}>
-                <span style={{ fontSize: 16 }}>{s.icon}</span>
+                <span style={{ fontSize: 15 }}>{s.icon}</span>
                 <span style={{ lineHeight: 1.2 }}>{s.title}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Step Content */}
-        <Card style={{ padding: "28px 26px" }}>
-          <h2 style={{ fontSize: 18, fontFamily: fontStack, fontWeight: 400, color: COLORS.text, margin: "0 0 20px", borderBottom: `1px solid ${COLORS.borderLight}`, paddingBottom: 12 }}>
-            {STEPS[step].icon} {STEPS[step].title}
+        {/* Step Content — Glass Card */}
+        <Card glass style={{ padding: "28px 26px" }}>
+          <h2 style={{ fontSize: 16, fontFamily: FONT, fontWeight: 600, color: C.text, margin: "0 0 20px", borderBottom: `1px solid ${C.borderLight}`, paddingBottom: 12, letterSpacing: -0.3, display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 18 }}>{STEPS[step].icon}</span> {STEPS[step].title}
           </h2>
 
           {step === 0 && <Step1_DadosGravida data={data} setData={setData} />}
@@ -907,43 +933,45 @@ export default function App() {
           {step === 6 && <StepResults data={data} />}
         </Card>
 
-        {/* Navigation */}
+        {/* Navigation — Ubnic buttons */}
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16, gap: 12 }}>
           {step > 0 ? (
             <button onClick={() => setStep(step - 1)} style={{
-              padding: "12px 24px", borderRadius: 10, border: `1.5px solid ${COLORS.border}`,
-              background: "#fff", color: COLORS.text, fontSize: 14, fontFamily: fontBody,
-              fontWeight: 500, cursor: "pointer",
+              padding: "11px 22px", borderRadius: 8, border: `1.5px solid ${C.border}`,
+              background: "#fff", color: C.text, fontSize: 14, fontFamily: FONT,
+              fontWeight: 500, cursor: "pointer", transition: "all 0.2s",
             }}>← Anterior</button>
           ) : <div />}
 
           {step < STEPS.length - 1 ? (
             <button onClick={goNext} disabled={!canNext()} style={{
-              padding: "12px 28px", borderRadius: 10, border: "none",
-              background: canNext() ? COLORS.accent : COLORS.border,
-              color: canNext() ? "#fff" : COLORS.textLight, fontSize: 14, fontFamily: fontBody,
+              padding: "11px 26px", borderRadius: 8, border: "none",
+              background: canNext() ? C.primary : C.border,
+              color: canNext() ? "#fff" : C.textLight, fontSize: 14, fontFamily: FONT,
               fontWeight: 600, cursor: canNext() ? "pointer" : "not-allowed",
               transition: "all 0.2s",
+              boxShadow: canNext() ? tintShadow(C.primary, 0.25) : "none",
             }}>Seguinte →</button>
           ) : (
             <button onClick={() => { setStep(0); setMaxVisited(0); setData({ ta: [{}, {}, {}], sintomas: {}, lab: { lsnAst: 40 }, fetal: {} }); }} style={{
-              padding: "12px 24px", borderRadius: 10, border: `1.5px solid ${COLORS.accent}`,
-              background: COLORS.accentLight, color: COLORS.accentDark, fontSize: 14,
-              fontFamily: fontBody, fontWeight: 600, cursor: "pointer",
+              padding: "11px 22px", borderRadius: 8, border: `1.5px solid ${C.primary}`,
+              background: C.primaryLight, color: C.primaryDark, fontSize: 14,
+              fontFamily: FONT, fontWeight: 600, cursor: "pointer",
+              boxShadow: tintShadow(C.primary, 0.1),
             }}>Nova Avaliação</button>
           )}
         </div>
       </main>
 
-      {/* Footer */}
+      {/* Footer — Glassmorphism */}
       <footer style={{
         position: "fixed", bottom: 0, left: 0, right: 0,
-        background: "rgba(250,247,245,0.95)", borderTop: `1px solid ${COLORS.borderLight}`,
+        background: C.surface, borderTop: `1px solid ${C.surfaceBorder}`,
         padding: "8px 16px", textAlign: "center",
-        backdropFilter: "blur(8px)",
+        backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
       }}>
-        <div style={{ fontSize: 10, color: COLORS.textLight, fontFamily: fontBody, maxWidth: 820, margin: "0 auto" }}>
-          Ferramenta de apoio à decisão clínica — Não substitui o julgamento clínico. Baseado em ISSHP 2021, ACOG 2020/2024, NICE 2023, Protocolo HPH/ULS Matosinhos 2022.
+        <div style={{ fontSize: 10, color: C.textLight, fontFamily: FONT, maxWidth: 820, margin: "0 auto" }}>
+          Ferramenta de apoio à decisão clínica — Não substitui o julgamento clínico · ISSHP 2021 · ACOG 2020/2024 · NICE 2023 · Protocolo HPH/ULS Matosinhos 2022
         </div>
       </footer>
     </div>
