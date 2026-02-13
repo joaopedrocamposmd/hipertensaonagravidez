@@ -217,28 +217,99 @@ function Step2_Antecedentes({ data, setData }) {
 }
 
 function Step3_TA({ data, setData }) {
-  const sys = data.taSistolica;
-  const dia = data.taDiastolica;
-  const isEmergency = sys >= 160 || dia >= 110;
-  const isHTA = sys >= 140 || dia >= 90;
-  const map = sys && dia ? ((2 * dia + sys) / 3).toFixed(0) : null;
+  const ta = data.ta || [{}, {}, {}];
+  const setTA = (idx, field, val) => {
+    const updated = [...ta];
+    updated[idx] = { ...updated[idx], [field]: val };
+    setData({ ...data, ta: updated });
+  };
+
+  // Calculate averages from filled measurements
+  const filledSys = ta.map(m => m.sys).filter(v => v != null && v > 0);
+  const filledDia = ta.map(m => m.dia).filter(v => v != null && v > 0);
+  const avgSys = filledSys.length > 0 ? Math.round(filledSys.reduce((a, b) => a + b, 0) / filledSys.length) : null;
+  const avgDia = filledDia.length > 0 ? Math.round(filledDia.reduce((a, b) => a + b, 0) / filledDia.length) : null;
+  const map = avgSys && avgDia ? Math.round((2 * avgDia + avgSys) / 3) : null;
+  const nMeasurements = Math.min(filledSys.length, filledDia.length);
+
+  // Store averages for use in classification
+  if (avgSys !== data.taSistolica || avgDia !== data.taDiastolica) {
+    setTimeout(() => setData(prev => ({ ...prev, taSistolica: avgSys, taDiastolica: avgDia })), 0);
+  }
+
+  const isEmergency = avgSys >= 160 || avgDia >= 110;
+  const isHTA = avgSys >= 140 || avgDia >= 90;
+
+  const labels = [
+    { num: "1.ª", required: true },
+    { num: "2.ª", required: false },
+    { num: "3.ª", required: false },
+  ];
 
   return (
     <div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "0 20px" }}>
-        <Field label="TA Sistólica" required style={{ flex: "1 1 180px", minWidth: 0 }}><NumInput value={data.taSistolica} onChange={v => setData({ ...data, taSistolica: v })} min={60} max={250} unit="mmHg" placeholder="Ex: 148" /></Field>
-        <Field label="TA Diastólica" required style={{ flex: "1 1 180px", minWidth: 0 }}><NumInput value={data.taDiastolica} onChange={v => setData({ ...data, taDiastolica: v })} min={30} max={160} unit="mmHg" placeholder="Ex: 95" /></Field>
-      </div>
+      <p style={{ fontSize: 13, color: COLORS.textMuted, fontFamily: fontBody, marginBottom: 18, lineHeight: 1.5 }}>
+        Introduza até 3 medições. O algoritmo utilizará a <strong style={{ color: COLORS.text }}>média das medições preenchidas</strong> para os cálculos.
+      </p>
 
-      {map && (
-        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderRadius: 10, background: "#f9f6f4", marginBottom: 16 }}>
-          <span style={{ fontSize: 12, color: COLORS.textMuted, fontFamily: fontBody }}>TAM:</span>
-          <span style={{ fontSize: 15, fontWeight: 600, color: COLORS.text, fontFamily: fontBody }}>{map} mmHg</span>
+      {labels.map((l, i) => (
+        <div key={i} style={{ marginBottom: i < 2 ? 12 : 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            <span style={{
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              width: 22, height: 22, borderRadius: "50%", fontSize: 11, fontWeight: 600,
+              fontFamily: fontBody,
+              background: l.required ? COLORS.accent : COLORS.borderLight,
+              color: l.required ? "#fff" : COLORS.textMuted,
+            }}>{i + 1}</span>
+            <span style={{ fontSize: 13, fontFamily: fontBody, color: COLORS.text, fontWeight: 500 }}>
+              {l.num} Medição
+            </span>
+            {l.required
+              ? <span style={{ fontSize: 11, color: COLORS.accent, fontFamily: fontBody, fontWeight: 500 }}>obrigatória</span>
+              : <span style={{ fontSize: 11, color: COLORS.textLight, fontFamily: fontBody }}>opcional</span>
+            }
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0 16px", paddingLeft: 30 }}>
+            <Field label="Sistólica" required={l.required} style={{ flex: "1 1 160px", minWidth: 0, marginBottom: 8 }}>
+              <NumInput value={ta[i].sys} onChange={v => setTA(i, "sys", v)} min={60} max={250} unit="mmHg" placeholder={i === 0 ? "Ex: 148" : "—"} />
+            </Field>
+            <Field label="Diastólica" required={l.required} style={{ flex: "1 1 160px", minWidth: 0, marginBottom: 8 }}>
+              <NumInput value={ta[i].dia} onChange={v => setTA(i, "dia", v)} min={30} max={160} unit="mmHg" placeholder={i === 0 ? "Ex: 95" : "—"} />
+            </Field>
+          </div>
+          {i < 2 && <div style={{ height: 1, background: COLORS.borderLight, marginTop: 4 }} />}
+        </div>
+      ))}
+
+      {/* Average summary box */}
+      {avgSys && avgDia && (
+        <div style={{
+          marginTop: 20, padding: "14px 18px", borderRadius: 12,
+          background: isEmergency ? COLORS.redBg : isHTA ? COLORS.yellowBg : COLORS.greenBg,
+          border: `1.5px solid ${isEmergency ? COLORS.red : isHTA ? COLORS.yellow : COLORS.green}`,
+        }}>
+          <div style={{ fontSize: 11, fontFamily: fontBody, fontWeight: 600, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>
+            Valores utilizados no algoritmo {nMeasurements > 1 ? `(média de ${nMeasurements} medições)` : "(1 medição)"}
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 24px", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+              <span style={{ fontSize: 13, color: COLORS.textMuted, fontFamily: fontBody }}>TA:</span>
+              <span style={{ fontSize: 22, fontWeight: 700, fontFamily: fontStack, color: COLORS.text }}>{avgSys}/{avgDia}</span>
+              <span style={{ fontSize: 12, color: COLORS.textMuted, fontFamily: fontBody }}>mmHg</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+              <span style={{ fontSize: 13, color: COLORS.textMuted, fontFamily: fontBody }}>TAM:</span>
+              <span style={{ fontSize: 17, fontWeight: 600, fontFamily: fontBody, color: COLORS.text }}>{map}</span>
+              <span style={{ fontSize: 12, color: COLORS.textMuted, fontFamily: fontBody }}>mmHg</span>
+            </div>
+          </div>
         </div>
       )}
 
+      {/* Alerts */}
       {isEmergency && (
-        <Card accent={COLORS.red} style={{ background: COLORS.redBg }}>
+        <Card accent={COLORS.red} style={{ background: COLORS.redBg, marginTop: 14 }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
             <span style={{ fontSize: 20 }}>🚨</span>
             <div>
@@ -253,7 +324,7 @@ function Step3_TA({ data, setData }) {
       )}
 
       {isHTA && !isEmergency && (
-        <Card accent={COLORS.yellow} style={{ background: COLORS.yellowBg }}>
+        <Card accent={COLORS.yellow} style={{ background: COLORS.yellowBg, marginTop: 14 }}>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
             <span style={{ fontSize: 18 }}>⚠️</span>
             <div>
@@ -263,12 +334,6 @@ function Step3_TA({ data, setData }) {
           </div>
         </Card>
       )}
-
-      <SectionTitle icon="🩺">2.ª Medição (recomendado)</SectionTitle>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "0 20px" }}>
-        <Field label="TA Sistólica (2.ª)" style={{ flex: "1 1 180px", minWidth: 0 }}><NumInput value={data.taSistolica2} onChange={v => setData({ ...data, taSistolica2: v })} min={60} max={250} unit="mmHg" /></Field>
-        <Field label="TA Diastólica (2.ª)" style={{ flex: "1 1 180px", minWidth: 0 }}><NumInput value={data.taDiastolica2} onChange={v => setData({ ...data, taDiastolica2: v })} min={30} max={160} unit="mmHg" /></Field>
-      </div>
     </div>
   );
 }
@@ -759,7 +824,7 @@ const STEPS = [
 export default function App() {
   const [step, setStep] = useState(0);
   const [maxVisited, setMaxVisited] = useState(0);
-  const [data, setData] = useState({ sintomas: {}, lab: { lsnAst: 40 }, fetal: {} });
+  const [data, setData] = useState({ ta: [{}, {}, {}], sintomas: {}, lab: { lsnAst: 40 }, fetal: {} });
 
   const goToStep = (i) => {
     if (i <= maxVisited) setStep(i);
@@ -775,13 +840,13 @@ export default function App() {
 
   const canNext = () => {
     if (step === 0) return data.idadeMaterna && data.igSemanas != null && data.paridade;
-    if (step === 2) return data.taSistolica && data.taDiastolica;
+    if (step === 2) return data.ta && data.ta[0] && data.ta[0].sys && data.ta[0].dia;
     return true;
   };
 
   return (
     <div style={{ minHeight: "100vh", background: COLORS.bg, fontFamily: fontBody, color: COLORS.text }}>
-      {/* Fonts loaded in index.html */}
+      <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
 
       {/* Header */}
       <header style={{
@@ -861,7 +926,7 @@ export default function App() {
               transition: "all 0.2s",
             }}>Seguinte →</button>
           ) : (
-            <button onClick={() => { setStep(0); setMaxVisited(0); setData({ sintomas: {}, lab: { lsnAst: 40 }, fetal: {} }); }} style={{
+            <button onClick={() => { setStep(0); setMaxVisited(0); setData({ ta: [{}, {}, {}], sintomas: {}, lab: { lsnAst: 40 }, fetal: {} }); }} style={{
               padding: "12px 24px", borderRadius: 10, border: `1.5px solid ${COLORS.accent}`,
               background: COLORS.accentLight, color: COLORS.accentDark, fontSize: 14,
               fontFamily: fontBody, fontWeight: 600, cursor: "pointer",
