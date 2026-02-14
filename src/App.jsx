@@ -35,13 +35,14 @@ const tintShadow = (color = C.primary, opacity = 0.08) => `0 4px 12px rgba(${hex
 const hexToRgb = (hex) => { const r = parseInt(hex.slice(1,3),16); const g = parseInt(hex.slice(3,5),16); const b = parseInt(hex.slice(5,7),16); return `${r},${g},${b}`; };
 
 // Ubnic Favicon (injected into <head>)
-const FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%233b877b"/><path d="M28 30V50C28 75 40 82 50 82 60 82 72 75 72 50V30" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/><circle cx="28" cy="30" r="8" fill="white"/><circle cx="50" cy="82" r="8" fill="white"/><circle cx="72" cy="30" r="8" fill="white"/></svg>`;
 const Favicon = () => {
   useEffect(() => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 100 100" fill="none"><rect width="100" height="100" rx="20" fill="#3b877b"/><path d="M28 30 V50 C28 75 40 82 50 82 C60 82 72 75 72 50 V30" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/><circle cx="28" cy="30" r="8" fill="white"/><circle cx="50" cy="82" r="8" fill="white"/><circle cx="72" cy="30" r="8" fill="white"/></svg>`;
+    const b64 = btoa(svg);
     let link = document.querySelector("link[rel~='icon']");
     if (!link) { link = document.createElement("link"); link.rel = "icon"; document.head.appendChild(link); }
     link.type = "image/svg+xml";
-    link.href = `data:image/svg+xml,${FAVICON_SVG}`;
+    link.href = `data:image/svg+xml;base64,${b64}`;
   }, []);
   return null;
 };
